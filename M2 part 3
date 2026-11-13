@@ -1,0 +1,155 @@
+local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+if root and not root.Anchored then root.Anchored = true anchoredRoot = root end
+cam.CameraType = Enum.CameraType.Scriptable
+cutFolder = Instance.new("Folder") cutFolder.Name = "ChristmasCut" cutFolder.Parent = workspace
+snowP = makeSnowfall(cutFolder)
+drone = Instance.new("Sound")
+drone.SoundId = SND.boom
+drone.Looped = true
+drone.Volume = 0
+drone.PlaybackSpeed = 0.5
+drone.Parent = SoundService
+pcall(function() local rv = Instance.new("ReverbSoundEffect") rv.DecayTime = 4 rv.Wetness = 0.4 rv.Parent = drone end)
+drone:Play()
+tw(drone, 2, { Volume = 0.3 * CFG.Volume })
+if CFG.MusicId ~= "" then
+local mu = Instance.new("Sound") mu.Name = "XmMusic" mu.SoundId = CFG.MusicId mu.Looped = true mu.Volume = 0.8 * CFG.Volume mu.Parent = drone mu:Play()
+end
+end
+function cleanupCut(keepGui)
+for _, o in ipairs({ cc, bloom, blur, dof }) do if o then o:Destroy() end end
+cc, bloom, blur, dof = nil, nil, nil, nil
+stopArcs()
+if cutFolder then cutFolder:Destroy() cutFolder = nil end
+snowP = nil
+if drone then drone:Destroy() drone = nil end
+if gui and not keepGui then gui:Destroy() gui = nil end
+for _, g in ipairs(hiddenGuis) do if g.Parent then g.Enabled = true end end
+hiddenGuis = {}
+pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, true) end)
+if anchoredRoot and anchoredRoot.Parent then anchoredRoot.Anchored = false end
+anchoredRoot = nil
+if controls then pcall(function() controls:Enable() end) end
+cam.CameraType = Enum.CameraType.Custom
+local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+if hum then cam.CameraSubject = hum end
+cam.FieldOfView = 70
+frameHook = nil
+burst = 0
+end
+function hoho(parent, vol)
+for i = 1, 3 do
+task.delay((i - 1) * 0.5, function()
+local s = sfx(SND.voice, vol or 0.8, 0.56 - i * 0.03, parent)
+pcall(function() local rv = Instance.new("ReverbSoundEffect") rv.DecayTime = 2 rv.Wetness = 0.3 rv.Parent = s end)
+end)
+end
+end
+function bells(isOn, vol, gap)
+task.spawn(function()
+while isOn() do
+for i = 1, 3 do
+sfx(SND.ping, vol, 2.1 + i * 0.12)
+task.wait(0.13)
+end
+task.wait(gap)
+end
+end)
+end
+LETTERS = {
+"Dear Santa,\nI was good this year!\nCan I please have a puppy?\n- Mia",
+"Dear Santa,\nPlease bring toys for my\nlittle brother too. Thank you!\n- Leo",
+"Dear Santa,\nI left cookies and milk\nby the chimney. Merry Christmas!\n- Ana",
+}
+function runCutscene()
+setupCut()
+local my = cutId
+local O = V(9000, 4000, 0)
+local O2 = O + V(0, 0, 1500)
+local W = buildVillage(cutFolder, O)
+local Rm = buildRoom(cutFolder, O2)
+local Sky = makeSky(cutFolder)
+local unit = makeUnit(cutFolder, 1)
+startArcs()
+local padCF = CFrame.lookAt(O + V(0, 0.3, -70), O + V(0, 0.3, -60))
+local phase, tPhase, alarm, letterOn, tick = "ext", 0, false, false, 0
+local function place(mode)
+if mode == "in" then
+tw(Lighting, 0.05, INDOOR)
+setAtmo(0.05, 0, 0)
+else
+tw(Lighting, 0.05, NIGHT)
+setAtmo(0.05, 0.12, 0.5)
+end
+end
+local paper = Instance.new("Frame")
+paper.Position = UDim2.new(0.04, 0, 0.2, 0)
+paper.Size = UDim2.new(0.38, 0, 0.34, 0)
+paper.BackgroundColor3 = C(250, 240, 215)
+paper.BorderSizePixel = 0
+paper.Rotation = -2
+paper.ZIndex = 6
+paper.Visible = false
+paper.Parent = gui
+local pl = Instance.new("TextLabel")
+pl.BackgroundTransparency = 1
+pl.Position = UDim2.new(0.05, 0, 0.08, 0)
+pl.Size = UDim2.new(0.9, 0, 0.85, 0)
+pl.TextColor3 = C(70, 40, 30)
+pl.TextXAlignment = Enum.TextXAlignment.Left
+pl.TextYAlignment = Enum.TextYAlignment.Top
+pl.TextWrapped = true
+pl.TextSize = 18
+pl.Text = ""
+pl.ZIndex = 7
+pl.Font = Enum.Font.Cartoon
+pcall(function() pl.Font = Enum.Font.Fondamento end)
+pl.Parent = paper
+rayParams.FilterDescendantsInstances = { plr.Character }
+frameHook = function(t)
+tick += 1
+if snowP then snowP.CFrame = CFrame.new(cam.CFrame.Position + V(0, 28, 0)) end
+if tick % 3 == 0 then skyUpdate(Sky, t, cam.CFrame.Position) end
+for i, b in ipairs(W.bulbs) do b.Transparency = 0.7 * (math.sin(t * 3 + i * 1.3) * 0.5 + 0.5) end
+for _, f in ipairs(W.folks) do
+if f.elf then f.rig.armR = 2.6 + math.sin(t * 5) * 0.4 end
+setRig(f.rig, f.cf, t)
+end
+local d = os.clock() - tPhase
+local hop = 0
+if phase == "read" then
+Rm.santa.armL, Rm.santa.armR = 1.0, 1.0
+hop = math.sin(t * 1.4) * 0.06
+elseif phase == "startle" then
+hop = d < 0.5 and math.sin(d / 0.5 * PI) * 1.8 or 0
+Rm.santa.armL, Rm.santa.armR = 2.8, 2.8
+end
+local sCF = CFrame.new(O2 + V(0, hop, -2.6))
+setRig(Rm.santa, sCF, t)
+if phase == "read" then
+Rm.letter.Transparency = 0
+Rm.letter.CFrame = sCF * CFrame.new(0, 3.5, -2.0) * CFrame.Angles(-0.35, 0, 0)
+else
+Rm.letter.Transparency = 1
+end
+if alarm then
+Rm.bBall.Color = C(255, 40, 40)
+Rm.bLight.Brightness = 2.5 + 2.5 * math.sin(t * 12)
+Rm.bBeam.Transparency = 0.35
+Rm.bBeam.CFrame = CFrame.new(Rm.beacon) * CFrame.Angles(0, t * 5, 0)
+end
+Rm.fireLight.Brightness = 2.2 + math.noise(t * 8, 1, 0) * 1.2
+for i, f in ipairs(Rm.flames) do f.Size = V(0.5, math.clamp(1.4 + math.noise(t * 9, i, 0) * 1.4, 0.6, 2.2), 0.5) end
+if phase ~= "fly" and phase ~= "end" then placeUnit(unit, padCF, t, true) end
+end
+place("out")
+sleep(0.4)
+tw(drone, 1, { Volume = 0.3 * CFG.Volume })
+tw(cover, 1.5, { BackgroundTransparency = 1 })
+task.spawn(function()
+sleep(0.5)
+showText("NORTH POLE", 80, C(190, 230, 255), 0.5, 1.7, C(40, 90, 160))
+sleep(0.2)
+showText("CHRISTMAS EVE", 60, GOLD, 0.5, 1.8, RED)
+end)
+      
