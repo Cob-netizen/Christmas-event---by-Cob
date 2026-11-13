@@ -1,0 +1,87 @@
+if now - lastRain > rnd(0.6, 1.4) / CFG.GiftsPerSecond then
+lastRain = now
+local ang, d = math.random() * 2 * PI, rnd(4, 80)
+local tp = root.Position + V(math.cos(ang) * d, 0, math.sin(ang) * d)
+dropGift(V(tp.X, root.Position.Y + 110, tp.Z), V(tp.X, groundY(tp, root.Position.Y) + 1.2, tp.Z), rnd(2.6, 3.8), 0, true)
+end
+for _, w in ipairs(walkers) do stepWalker(w, dt, t, root.Position) end
+end
+step(0.016)
+evFolder.Parent = workspace
+evConns[#evConns + 1] = RunService.RenderStepped:Connect(step)
+evDrone = Instance.new("Sound")
+evDrone.SoundId = SND.boom
+evDrone.Looped = true
+evDrone.Volume = 0.18 * CFG.Volume
+evDrone.PlaybackSpeed = 0.55
+evDrone.Parent = SoundService
+pcall(function()
+local rv = Instance.new("ReverbSoundEffect") rv.DecayTime = 5 rv.Wetness = 0.5 rv.Parent = evDrone
+local ch = Instance.new("ChorusSoundEffect") ch.Depth = 0.6 ch.Rate = 0.6 ch.Mix = 0.5 ch.Parent = evDrone
+end)
+evDrone:Play()
+if CFG.MusicId ~= "" then
+local mu = Instance.new("Sound") mu.SoundId = CFG.MusicId mu.Looped = true mu.Volume = 0.8 * CFG.Volume mu.Parent = evDrone mu:Play()
+end
+sfx(SND.boom, 0.6, 0.6)
+bells(alive, 0.22, 1.4)
+task.spawn(function()
+task.wait(3)
+while alive() do
+if evUnit then hoho(evUnit.sl[1].p, 1) end
+local w0 = os.clock()
+while alive() and os.clock() - w0 < rnd(9, 15) do task.wait(0.5) end
+end
+end)
+task.spawn(function()
+while alive() do
+local left = math.max(0, math.floor(endClock - os.clock()))
+if timerLbl and timerLbl.Parent then timerLbl.Text = string.format("%d:%02d", math.floor(left / 60), left % 60) end
+if left <= 0 then stopEvent(true) break end
+task.wait(0.5)
+end
+end)
+end
+cancelled = false
+function playAll(total)
+if busy or eventOn then return end
+busy = true
+cancelled = false
+local started = os.clock()
+local ok, err = pcall(runCutscene)
+if not ok then warn("[Christmas] error: " .. tostring(err)) end
+if cover and cover.Parent then cover.BackgroundTransparency = 0 end
+cleanupCut(true)
+if not cancelled then
+startEvent(math.max(15, total - (os.clock() - started)))
+if gui and cover then
+flash(C(200, 230, 255), 0.6, 1.5)
+tw(cover, 2.2, { BackgroundTransparency = 1 })
+task.delay(2.4, function() if gui then gui:Destroy() gui = nil end end)
+end
+elseif gui then
+gui:Destroy()
+gui = nil
+end
+abort = false
+busy = false
+end
+remote.OnClientEvent:Connect(function(kind, a)
+if kind == "cutscene" then
+task.spawn(playAll, a)
+elseif kind == "begin" then
+if not busy and not eventOn then startEvent(a) end
+elseif kind == "stop" then
+if busy then cancelled = true abort = true end
+stopEvent(true)
+end
+end)
+task.spawn(function()
+local TCS = game:GetService("TextChatService")
+local cmds = TCS:WaitForChild("TextChatCommands", 10)
+if not cmds then return end
+local cmd = cmds:WaitForChild("ChristmasCommand", 10)
+if cmd then cmd.Triggered:Connect(function(_, text) remote:FireServer("cmd", text) end) end
+end)
+end
+           
