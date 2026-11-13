@@ -1,0 +1,35 @@
+local la = math.clamp((tn - st) / ln, 0, 1)
+local right = dir:Cross(V(0, 1, 0)).Unit
+if idx == 0 then
+fixedPos = fixedPos or (O + V(12, 2.5, -66))
+return CFrame.lookAt(fixedPos, pos), lerp(70, 50, la)
+elseif idx == 1 then
+return CFrame.lookAt(pos - dir * 22 + V(0, 9, 0), pos + dir * 12), 72
+elseif idx == 2 then
+return CFrame.lookAt(pos + right * (30 - 8 * la) + V(0, 4, 0), pos), 62
+elseif idx == 3 then
+return CFrame.lookAt(pos + V(0, 55, 0) - dir * 6, pos, dir), 65
+elseif idx == 4 then
+fixedPos = fixedPos or (pathAt(P, s + 75) + V(10, -15, 0))
+return CFrame.lookAt(fixedPos, pos), lerp(75, 40, la)
+end
+return CFrame.lookAt(pos - dir * 36 - right * 14 + V(0, 16, 0), pos + dir * 8), 68
+end, 0.05)
+phase = "end"
+if abort then return end
+runShot(1.3, function() return cam.CFrame, cam.FieldOfView end, 0)
+if abort then return end
+flash(WHITE, 0.9, 0.8)
+cover.BackgroundTransparency = 0
+for _, f in ipairs({ barTop, barBot }) do f.Visible = false end
+sfx(SND.boom, 1, 0.5)
+sfx(SND.ping, 1, 1.2)
+tw(drone, 1.2, { Volume = 0 })
+sleep(1.2)
+if abort then return end
+task.spawn(function() showText("CHRISTMAS EVENT", 90, GOLD, 0.42, 3.6, RED) end)
+sleep(0.9)
+showText("STARTS NOW", 40, WHITE, 0.55, 2.4, C(60, 200, 100))
+end
+end
+           
