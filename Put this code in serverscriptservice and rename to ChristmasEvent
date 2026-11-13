@@ -1,0 +1,78 @@
+//Made : by Cob
+-- SCRIPT (hindi LocalScript) -- ilagay sa ServerScriptService, pangalan: ChristmasEvent
+-- Chat command (si benjacobs_18 lang):
+--   /Christmas        -> simulan ang event (trailer para sa lahat, tapos night + aurora, Santa, gift, duwende at snowman)
+--   /Christmas stop   -> itigil ang event
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
+
+local CFG = {
+	Owner = "benjacobs_18",
+	EventLength = 600,      -- ilang segundo tatagal ang event pagkatapos ng cutscene (600 = 10 minuto)
+	CutsceneLength = 56,    -- tantiya ng haba ng cutscene (segundo)
+}
+
+local remote = ReplicatedStorage:FindFirstChild("ChristmasRemote")
+if not remote then
+	remote = Instance.new("RemoteEvent")
+	remote.Name = "ChristmasRemote"
+	remote.Parent = ReplicatedStorage
+end
+
+local active, token, endsAt = false, 0, 0
+
+local function stopEvent()
+	if not active then return end
+	active = false
+	token += 1
+	remote:FireAllClients("stop")
+	print("[Christmas] Tapos na ang event.")
+end
+
+local function startEvent()
+	if active then return end
+	active = true
+	token += 1
+	local my = token
+	local total = CFG.CutsceneLength + CFG.EventLength
+	endsAt = os.clock() + total
+	remote:FireAllClients("cutscene", total)
+	print("[Christmas] Nagsimula ang event! Tatagal ng " .. total .. " segundo.")
+	task.delay(total, function()
+		if active and token == my then stopEvent() end
+	end)
+end
+
+local function onCommand(player, text)
+	if not player or player.Name:lower() ~= CFG.Owner:lower() then return end
+	text = string.lower(tostring(text or "")):gsub("^%s+", ""):gsub("%s+$", "")
+	local word, arg = text:match("^(%S+)%s*(%S*)")
+	if word ~= "/christmas" then return end
+	if arg == "stop" or arg == "off" then stopEvent() else startEvent() end
+end
+
+remote.OnServerEvent:Connect(function(player, kind, text)
+	if kind == "cmd" then onCommand(player, text) end
+end)
+
+local function hook(player)
+	player.Chatted:Connect(function(msg) onCommand(player, msg) end)
+	if active then -- sumali habang may event: walang cutscene, diretso sa event
+		task.delay(4, function()
+			if active and player.Parent then remote:FireClient(player, "begin", math.max(5, endsAt - os.clock())) end
+		end)
+	end
+end
+Players.PlayerAdded:Connect(hook)
+for _, p in ipairs(Players:GetPlayers()) do hook(p) end
+
+local cmds = TextChatService:FindFirstChild("TextChatCommands")
+if cmds and not cmds:FindFirstChild("ChristmasCommand") then
+	local c = Instance.new("TextChatCommand")
+	c.Name = "ChristmasCommand"
+	c.PrimaryAlias = "/Christmas"
+	c.SecondaryAlias = "/christmas"
+	c.Parent = cmds
+end
+               
