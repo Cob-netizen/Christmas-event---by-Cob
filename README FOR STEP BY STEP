@@ -1,0 +1,12 @@
+In ServerScriptService, create a Script (not a LocalScript) named "ChristmasEvent". Paste #1 into it.
+
+In StarterPlayer > StarterPlayerScripts, create a LocalScript named "ChristmasClient". Paste #2 (Loader) into it.
+
+Inside that LocalScript, create 3 ModuleScripts named exactly "M1", "M2", and "M3".
+
+Paste all M1 parts into M1 in the correct order, one by one, adding each part at the bottom. Do the same for M2 and M3.
+
+In-game commands:
+
+- "/Christmas" – Start the event.
+- "/Christmas stop" – Stop the event.
