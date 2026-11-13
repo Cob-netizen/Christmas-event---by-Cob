@@ -1,0 +1,158 @@
+function makeLabel(text, size, color, z, parent)
+local l = Instance.new("TextLabel")
+l.BackgroundTransparency = 1
+l.AnchorPoint = Vector2.new(0.5, 0.5)
+l.Text = text
+l.TextScaled = true
+l.Font = Enum.Font.GothamBlack
+l.TextColor3 = color or Color3.new(1, 1, 1)
+l.TextTransparency = 1
+l.ZIndex = z or 10
+local sc = Instance.new("UITextSizeConstraint")
+sc.MaxTextSize = size
+sc.Parent = l
+local st = Instance.new("UIStroke")
+st.Thickness = 2
+st.Transparency = 1
+st.Color = Color3.new(0, 0, 0)
+st.Parent = l
+l.Parent = parent or gui
+return l, st
+end
+function flash(color, strength, t)
+flashF.BackgroundColor3 = color or Color3.new(1, 1, 1)
+flashF.BackgroundTransparency = 1 - (strength or 0.7)
+tw(flashF, t or 0.5, { BackgroundTransparency = 1 })
+end
+function showText(text, size, color, y, hold, stroke)
+local l, st = makeLabel(text, size, Color3.new(1, 1, 1), 10)
+l.Position = UDim2.new(0.5, 0, y, 0)
+l.Size = UDim2.new(0.86, 0, size > 60 and 0.16 or 0.06, 0)
+st.Color = stroke or color
+local sc = Instance.new("UIScale")
+sc.Scale = 2
+sc.Parent = l
+l.TextColor3 = color
+tw(l, 0.3, { TextTransparency = 0 })
+tw(st, 0.3, { Transparency = 0.15 })
+tw(sc, 0.45, { Scale = 1 }, Enum.EasingStyle.Back)
+sfx(SND.ping, 0.8, 0.9)
+sleep(hold)
+tw(l, 0.4, { TextTransparency = 1 })
+tw(st, 0.4, { Transparency = 1 })
+Debris:AddItem(l, 0.6)
+end
+function runShot(dur, fn, baseShake)
+dur = dur * CFG.ShotLength
+local t0 = os.clock()
+while not abort do
+local a = (os.clock() - t0) / dur
+if a >= 1 then break end
+local cf, fov = fn(a)
+burst = burst * 0.93
+cam.CFrame = cf * shakeCF(os.clock(), (baseShake or 0.05) + burst)
+cam.FieldOfView = fov
+if atmo then atmo.CFrame = cam.CFrame * CFrame.new(0, 0, -26) end
+if frameHook then frameHook(os.clock()) end
+RunService.RenderStepped:Wait()
+end
+end
+function B(rig, shape, size, pos, color, mat, j, an, tr)
+local s = rig.s
+local p = mk(rig.parent, shape, size * s, CFrame.identity, color, mat, tr)
+rig[#rig + 1] = { p = p, o = CFrame.new(pos * s), j = j and j * s, a = an }
+return p
+end
+function setRig(rig, cf, t)
+for i = 1, #rig do
+local r = rig[i]
+local m = cf
+if r.a then
+local an = r.a(t, rig)
+if r.j then m = m * CFrame.new(r.j) * an * CFrame.new(-r.j) else m = m * an end
+end
+r.p.CFrame = m * r.o
+end
+end
+function sparkle(parent, c1, c2, rate, size, life, speed)
+local e = Instance.new("ParticleEmitter")
+e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+e.LightEmission = 1
+e.Color = ColorSequence.new(c1, c2 or c1)
+e.Size = NumberSequence.new(size, size * 0.2)
+e.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(1, 1) })
+e.Lifetime = NumberRange.new(life * 0.6, life)
+e.Rate = rate
+e.Speed = NumberRange.new(speed * 0.5, speed)
+e.SpreadAngle = Vector2.new(180, 180)
+e.Parent = parent
+return e
+end
+function makeFolk(parent, kind, s, sit)
+local rig = { parent = parent, s = s, armL = 0, armR = 0, walk = 0, ph = math.random() * 6 }
+local elf = kind == "elf"
+local coat = elf and C(35, 150, 65) or RED
+local trim = elf and C(215, 40, 45) or C(250, 250, 255)
+local skin, black = C(255, 205, 170), C(25, 25, 30)
+local function legA(sg) return function(t, r) return CFrame.Angles(math.sin(r.ph + t * 9) * 0.6 * sg * r.walk, 0, 0) end end
+local function armA(sg, key) return function(t, r) return CFrame.Angles(r[key] - math.sin(r.ph + t * 9) * 0.5 * sg * r.walk, 0, 0) end end
+for _, sx in ipairs({ -0.5, 0.5 }) do
+local sg = sx > 0 and 1 or -1
+if sit then
+B(rig, BLOCK, V(0.9, 0.9, 1.8), V(sx, 2.3, -0.9), coat)
+B(rig, BLOCK, V(0.9, 1.9, 0.9), V(sx, 1.35, -1.7), coat)
+B(rig, BLOCK, V(1, 0.7, 1.4), V(sx, 0.4, -1.85), black)
+else
+local j = V(sx, 2.4, 0)
+B(rig, BLOCK, V(0.9, 1.9, 0.9), V(sx, 1.45, 0), coat, nil, j, legA(sg))
+B(rig, BLOCK, V(1, 0.7, elf and 1.6 or 1.3), V(sx, 0.35, -0.2), black, nil, j, legA(sg))
+end
+local sh = sx * 3
+local j = V(sh, 4.5, 0)
+local key = sx > 0 and "armR" or "armL"
+B(rig, BLOCK, V(0.7, 2.1, 0.7), V(sh, 3.5, 0), coat, nil, j, armA(sg, key))
+B(rig, BALL, V(0.8, 0.8, 0.8), V(sh, 2.4, 0), elf and skin or WHITE, nil, j, armA(sg, key))
+end
+B(rig, BLOCK, V(2.2, 2.3, 1.4), V(0, 3.55, 0), coat)
+B(rig, BLOCK, V(2.3, 0.4, 1.5), V(0, 3.1, 0), black)
+B(rig, BLOCK, V(0.5, 0.45, 0.1), V(0, 3.1, -0.78), GOLD, NEON)
+B(rig, BLOCK, V(0.4, 2.3, 0.1), V(0, 3.55, -0.72), trim)
+B(rig, BALL, V(1.8, 1.8, 1.8), V(0, 5.6, 0), skin)
+B(rig, BALL, V(0.25, 0.25, 0.25), V(-0.35, 5.75, -0.8), black)
+B(rig, BALL, V(0.25, 0.25, 0.25), V(0.35, 5.75, -0.8), black)
+B(rig, BALL, V(0.35, 0.35, 0.35), V(0, 5.55, -0.9), C(255, 150, 140))
+B(rig, BLOCK, V(2, 0.45, 2), V(0, 6.2, 0), trim)
+if elf then
+B(rig, BLOCK, V(0.2, 0.7, 0.5), V(-1, 5.8, 0), skin)
+B(rig, BLOCK, V(0.2, 0.7, 0.5), V(1, 5.8, 0), skin)
+B(rig, BLOCK, V(1.4, 1.5, 1.4), V(0, 6.95, 0), coat)
+B(rig, BLOCK, V(0.8, 1.2, 0.8), V(0.3, 8.1, 0.3), coat)
+B(rig, BALL, V(0.55, 0.55, 0.55), V(0.55, 8.8, 0.55), trim)
+else
+B(rig, BALL, V(1.6, 1.6, 1.6), V(0, 5.0, -0.35), WHITE)
+B(rig, BLOCK, V(1.2, 0.3, 0.5), V(0, 5.35, -0.8), WHITE)
+B(rig, BLOCK, V(1.7, 1.1, 1.7), V(0, 6.8, 0), coat)
+B(rig, BLOCK, V(1.1, 0.9, 1.1), V(0.25, 7.6, 0.25), coat)
+B(rig, BALL, V(0.7, 0.7, 0.7), V(0.5, 8.1, 0.5), WHITE)
+end
+return rig
+end
+function makeSnow(parent, s)
+local rig = { parent = parent, s = s, walk = 0, ph = math.random() * 6 }
+local function wave(sg) return function(t, r) return CFrame.Angles(0, 0, sg * (0.5 + math.sin(t * 3 + r.ph) * 0.35)) end end
+B(rig, BALL, V(3.4, 3.4, 3.4), V(0, 1.7, 0), SNOW, Enum.Material.Snow)
+B(rig, BALL, V(2.6, 2.6, 2.6), V(0, 4.4, 0), SNOW, Enum.Material.Snow)
+B(rig, BALL, V(1.9, 1.9, 1.9), V(0, 6.5, 0), SNOW, Enum.Material.Snow)
+B(rig, BALL, V(0.28, 0.28, 0.28), V(-0.4, 6.8, -0.85), C(20, 20, 20))
+B(rig, BALL, V(0.28, 0.28, 0.28), V(0.4, 6.8, -0.85), C(20, 20, 20))
+B(rig, BLOCK, V(0.3, 0.3, 1.1), V(0, 6.5, -1.3), C(255, 130, 30))
+for i, y in ipairs({ 4.9, 4.4, 3.9 }) do B(rig, BALL, V(0.3, 0.3, 0.3), V(0, y, -1.25), C(20, 20, 20)) end
+B(rig, BLOCK, V(2.2, 0.5, 2.2), V(0, 5.5, 0), RED)
+B(rig, BLOCK, V(0.5, 1.1, 0.3), V(0.7, 4.9, -1.1), RED)
+B(rig, BLOCK, V(1.4, 1.1, 1.4), V(0, 7.8, 0), C(25, 25, 30))
+B(rig, BLOCK, V(2, 0.2, 2), V(0, 7.3, 0), C(25, 25, 30))
+B(rig, BLOCK, V(2, 0.2, 0.2), V(-2, 4.9, 0), C(110, 70, 35), nil, V(-1, 4.9, 0), wave(1))
+B(rig, BLOCK, V(2, 0.2, 0.2), V(2, 4.9, 0), C(110, 70, 35), nil, V(1, 4.9, 0), wave(-1))
+return rig
+end
+  
