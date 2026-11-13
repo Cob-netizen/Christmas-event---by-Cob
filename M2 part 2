@@ -1,0 +1,154 @@
+for i, p in ipairs({ { 13, -6 }, { 14.5, -4.5 }, { 18, -5.5 }, { 11.5, -8 }, { 12, -11 }, { 19.5, -6.5 } }) do
+local sz = rnd(1.4, 2.4)
+P(BLOCK, V(sz, sz, sz), V(p[1], sz / 2, p[2]), GIFTC[i])
+P(BLOCK, V(sz * 1.05, sz * 0.2, sz * 1.05), V(p[1], sz / 2, p[2]), WHITE)
+end
+P(BLOCK, V(9, 0.6, 4.4), V(0, 3.8, -7.5), C(110, 70, 40), Enum.Material.Wood)
+for _, x in ipairs({ -4.1, 4.1 }) do for _, z in ipairs({ -9.2, -5.8 }) do P(BLOCK, V(0.6, 3.5, 0.6), V(x, 1.75, z), C(90, 55, 30), Enum.Material.Wood) end end
+for i = 1, 9 do
+P(BLOCK, V(1.6, 0.12, 1.2), V(rnd(0.5, 3.2), 4.12 + (i % 3) * 0.12, rnd(-8.3, -6.8)), C(250, 244, 225)).CFrame = CFrame.new(O + V(rnd(0.5, 3.2), 4.12 + (i % 3) * 0.13, rnd(-8.3, -6.8))) * CFrame.Angles(0, rnd(-0.5, 0.5), 0)
+end
+P(BALL, V(0.5, 0.5, 0.5), V(1.5, 4.5, -7.4), RED)
+cyl(parent, O + V(-3.6, 4.1, -8.3), 0.8, 0.8, C(40, 40, 40))
+local lb = mk(parent, BALL, V(1.5, 1.5, 1.5), CFrame.new(O + V(-3.6, 5.5, -8.3)), C(255, 225, 150), NEON)
+local ll = Instance.new("PointLight")
+ll.Color = C(255, 215, 150) ll.Range = 26 ll.Brightness = 1.6
+ll.Parent = lb
+P(BLOCK, V(3.6, 0.5, 2.4), V(0, 1.6, -2.2), C(150, 20, 30))
+P(BLOCK, V(3.6, 4, 0.4), V(0, 3.6, -1.2), C(150, 20, 30))
+for _, p in ipairs({ { -1.5, -1.5 }, { 1.5, -1.5 }, { -1.5, -3 }, { 1.5, -3 } }) do P(BLOCK, V(0.4, 1.4, 0.4), V(p[1], 0.7, p[2]), C(90, 55, 30)) end
+Rm.beacon = O + V(0, 15, -15)
+Rm.bBall = mk(parent, BALL, V(1.8, 1.8, 1.8), CFrame.new(Rm.beacon), C(90, 10, 10), NEON)
+Rm.bBeam = mk(parent, BLOCK, V(16, 0.5, 0.5), CFrame.new(Rm.beacon), C(255, 40, 40), NEON, 1)
+Rm.bLight = Instance.new("PointLight")
+Rm.bLight.Color = C(255, 30, 30) Rm.bLight.Range = 60 Rm.bLight.Brightness = 0
+Rm.bLight.Parent = Rm.bBall
+local scr = mk(parent, BLOCK, V(9, 4.5, 0.3), CFrame.new(O + V(-8, 11, -15.6)), C(15, 15, 20))
+local sg = Instance.new("SurfaceGui")
+sg.Face = Enum.NormalId.Back
+sg.Parent = scr
+local t1 = Instance.new("TextLabel")
+t1.Size = UDim2.new(1, 0, 1, 0)
+t1.BackgroundTransparency = 1
+t1.Text = "NORTH POLE\nALL QUIET"
+t1.TextScaled = true
+t1.Font = Enum.Font.GothamBlack
+t1.TextColor3 = C(80, 255, 120)
+t1.Parent = sg
+Rm.screenText = t1
+Rm.santa = makeFolk(parent, "santa", 1, true)
+Rm.letter = mk(parent, BLOCK, V(2.2, 2.6, 0.08), CFrame.new(O), C(250, 244, 225))
+return Rm
+end
+function makeSky(parent)
+local S = { seg = {}, stars = Instance.new("Model"), last = V(1e9, 0, 0), tick = 0 }
+local cols = { C(60, 255, 150), C(80, 230, 255), C(190, 110, 255) }
+for k = 1, 3 do
+local R, n = 620 + k * 70, 40
+for i = 1, n do
+local p = mk(parent, BLOCK, V(2 * PI * R / n * 1.1, 200, 4), CFrame.new(), cols[k], NEON, 0.6)
+S.seg[#S.seg + 1] = { p = p, k = k, i = i, n = n, R = R }
+end
+end
+for i = 1, 150 do
+local d = V(rnd(-1, 1), rnd(0.08, 1), rnd(-1, 1)).Unit * 1900
+local z = rnd(2, 5)
+mk(S.stars, BALL, V(z, z, z), CFrame.new(d), i % 5 == 0 and C(255, 235, 170) or C(220, 235, 255), NEON)
+end
+S.stars.Parent = parent
+S.stars.WorldPivot = CFrame.new()
+return S
+end
+function skyUpdate(S, t, c)
+for _, g in ipairs(S.seg) do
+local ang = g.i / g.n * 2 * PI
+local n1 = math.noise(g.i * 0.21 + g.k * 3.1, t * 0.12, g.k + 0.5)
+local n2 = math.noise(g.i * 0.33 + 0.4, t * 0.2 + g.k * 5, 1.7)
+local h = math.clamp(190 + 220 * n1, 90, 330)
+local R = g.R + n2 * 60
+local pos = c + V(math.cos(ang) * R, 70 + h * 0.5 + g.k * 14, math.sin(ang) * R)
+g.p.Size = V(g.p.Size.X, h, 4)
+g.p.CFrame = CFrame.lookAt(pos, c + V(0, pos.Y - c.Y, 0)) * CFrame.Angles(0, 0, n2 * 0.3)
+g.p.Transparency = math.clamp(0.5 - n2 * 1.1 - n1 * 0.4, 0.3, 0.96)
+end
+if (c - S.last).Magnitude > 40 then
+S.last = c
+S.stars:PivotTo(CFrame.new(c))
+end
+end
+function makeSnowfall(parent)
+local p = mk(parent, BLOCK, V(90, 1, 90), CFrame.new(), WHITE, nil, 1)
+local e = Instance.new("ParticleEmitter")
+e.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+e.Color = ColorSequence.new(WHITE)
+e.LightEmission = 0.4
+e.Size = NumberSequence.new(0.45)
+e.Transparency = NumberSequence.new(0.1)
+e.Lifetime = NumberRange.new(5, 6)
+e.Rate = 170
+e.Speed = NumberRange.new(10, 15)
+e.Acceleration = V(3, 0, 1)
+e.EmissionDirection = Enum.NormalId.Bottom
+e.Parent = p
+return p
+end
+function buildPath(pts)
+local P = { p = {}, c = { 0 } }
+local n = #pts
+for i = 1, n - 1 do
+local p0, p1, p2, p3 = pts[math.max(1, i - 1)], pts[i], pts[i + 1], pts[math.min(n, i + 2)]
+for k = 0, 11 do
+local u = k / 12
+local u2, u3 = u * u, u * u * u
+P.p[#P.p + 1] = (p1 * 2 + (p2 - p0) * u + (p0 * 2 - p1 * 5 + p2 * 4 - p3) * u2 + (p1 * 3 - p0 - p2 * 3 + p3) * u3) * 0.5
+end
+end
+P.p[#P.p + 1] = pts[n]
+for i = 2, #P.p do P.c[i] = P.c[i - 1] + (P.p[i] - P.p[i - 1]).Magnitude end
+P.L = P.c[#P.c]
+return P
+end
+function pathAt(P, s)
+s = math.clamp(s, 0, P.L)
+local lo, hi = 1, #P.c
+while hi - lo > 1 do
+local mid = (lo + hi) // 2
+if P.c[mid] <= s then lo = mid else hi = mid end
+end
+local f = (s - P.c[lo]) / math.max(1e-6, P.c[hi] - P.c[lo])
+return P.p[lo]:Lerp(P.p[hi], f)
+end
+function pathDir(P, s)
+return (pathAt(P, s + 5) - pathAt(P, s - 5)).Unit
+end
+NIGHT = { ClockTime = 0, FogColor = C(10, 18, 45), FogStart = 500, FogEnd = 7000, Ambient = C(70, 85, 135), OutdoorAmbient = C(85, 105, 165), Brightness = 1.6, ExposureCompensation = 0.25 }
+INDOOR = { ClockTime = 0, FogColor = C(30, 20, 20), FogStart = 500, FogEnd = 7000, Ambient = C(120, 92, 82), OutdoorAmbient = C(120, 95, 88), Brightness = 1.2, ExposureCompensation = 0.1 }
+function setAtmo(t, density, haze)
+local a = Lighting:FindFirstChildOfClass("Atmosphere")
+if not a then
+a = Instance.new("Atmosphere")
+a.Density = 0
+a.Haze = 0
+a.Parent = Lighting
+createdAtm = true
+end
+tw(a, t, { Density = density, Haze = haze, Color = C(150, 180, 255), Decay = C(60, 80, 140), Glare = 0, Offset = 0.1 })
+end
+function setupCut()
+abort = false
+cutId += 1
+buildGui()
+saveLighting()
+cc = Instance.new("ColorCorrectionEffect") cc.Name = "XmCC" cc.TintColor = C(225, 240, 255) cc.Saturation = 0.15 cc.Contrast = 0.1 cc.Parent = Lighting
+bloom = Instance.new("BloomEffect") bloom.Name = "XmBloom" bloom.Intensity = 0.8 bloom.Size = 40 bloom.Threshold = 0.8 bloom.Parent = Lighting
+blur = Instance.new("BlurEffect") blur.Name = "XmBlur" blur.Size = 0 blur.Parent = Lighting
+dof = Instance.new("DepthOfFieldEffect") dof.Name = "XmDOF" dof.FarIntensity = 0.15 dof.FocusDistance = 40 dof.InFocusRadius = 60 dof.NearIntensity = 0 dof.Parent = Lighting
+pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false) end)
+for _, g in ipairs(plr.PlayerGui:GetChildren()) do
+if g:IsA("ScreenGui") and g ~= gui and g.Enabled then hiddenGuis[#hiddenGuis + 1] = g g.Enabled = false end
+end
+pcall(function()
+controls = require(plr:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule")):GetControls()
+controls:Disable()
+end)
+  
