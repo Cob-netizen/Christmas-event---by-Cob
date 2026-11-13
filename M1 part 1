@@ -1,0 +1,166 @@
+return function()
+Players = game:GetService("Players")
+RunService = game:GetService("RunService")
+TweenService = game:GetService("TweenService")
+Lighting = game:GetService("Lighting")
+SoundService = game:GetService("SoundService")
+StarterGui = game:GetService("StarterGui")
+Debris = game:GetService("Debris")
+RS = game:GetService("ReplicatedStorage")
+plr = Players.LocalPlayer
+cam = workspace.CurrentCamera
+remote = RS:WaitForChild("ChristmasRemote")
+CFG = {
+GiftsPerSecond = 3,
+MaxGifts = 45,
+ThrowEvery = 0.75,
+Elves = 6,
+Snowmen = 5,
+SantaScale = 2.2,
+OrbitRadius = 95,
+OrbitHeight = 58,
+Volume = 1,
+ShotLength = 1,
+MusicId = "",
+}
+SND = {
+boom = "rbxasset://sounds/bass.wav",
+hit = "rbxasset://sounds/impact_water.mp3",
+whoosh = "rbxasset://sounds/swordslash.wav",
+voice = "rbxasset://sounds/uuhhh.mp3",
+ping = "rbxasset://sounds/electronicpingshort.wav",
+lunge = "rbxasset://sounds/swordlunge.wav",
+}
+PI = math.pi
+function C(r, g, b) return Color3.fromRGB(r, g, b) end
+function easeInOut(a) return a * a * (3 - 2 * a) end
+function lerp(a, b, t) return a + (b - a) * t end
+function rnd(a, b) return a + math.random() * (b - a) end
+function tw(obj, t, props, style, dir)
+local tween = TweenService:Create(obj, TweenInfo.new(t, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out), props)
+tween:Play()
+return tween
+end
+abort, busy, eventOn, eventToken = false, false, false, 0
+cutId = 0
+function sleep(t)
+local t0 = os.clock()
+while os.clock() - t0 < t and not abort do RunService.RenderStepped:Wait() end
+end
+function sfx(id, vol, speed, parent)
+local s = Instance.new("Sound")
+s.SoundId = id
+s.Volume = (vol or 1) * CFG.Volume
+s.PlaybackSpeed = speed or 1
+if parent then s.RollOffMaxDistance = 140 s.RollOffMinDistance = 12 end
+s.Parent = parent or SoundService
+s:Play()
+Debris:AddItem(s, 8)
+return s
+end
+V = Vector3.new
+RED, GREEN, GOLD, WHITE = C(205, 30, 35), C(30, 140, 60), C(255, 205, 70), C(250, 250, 255)
+SNOW = C(240, 245, 255)
+BALL, CYL, NEON = Enum.PartType.Ball, Enum.PartType.Cylinder, Enum.Material.Neon
+BLOCK = Enum.PartType.Block
+function mk(parent, shape, size, cf, color, mat, tr)
+local p = Instance.new("Part")
+p.Anchored = true
+p.CanCollide = false
+p.CanTouch = false
+p.CanQuery = false
+p.CastShadow = false
+p.Shape = shape or BLOCK
+p.Size = Vector3.new(math.min(size.X, 2040), math.min(size.Y, 2040), math.min(size.Z, 2040))
+p.CFrame = cf
+p.Color = color
+p.Material = mat or Enum.Material.SmoothPlastic
+p.Transparency = tr or 0
+p.Parent = parent
+return p
+end
+function cyl(parent, base, h, d, color, mat, tr)
+return mk(parent, CYL, Vector3.new(h, d, d), CFrame.new(base + Vector3.new(0, h / 2, 0)) * CFrame.Angles(0, 0, PI / 2), color, mat, tr)
+end
+function disc(parent, pos, d, color, mat, tr)
+return mk(parent, CYL, Vector3.new(0.4, d, d), CFrame.new(pos) * CFrame.Angles(0, 0, PI / 2), color, mat, tr)
+end
+LIGHT_PROPS = { "ClockTime", "FogColor", "FogStart", "FogEnd", "Ambient", "OutdoorAmbient", "Brightness", "ExposureCompensation" }
+function saveLighting()
+if saved then return end
+saved = {}
+for _, p in ipairs(LIGHT_PROPS) do saved[p] = Lighting[p] end
+local a = Lighting:FindFirstChildOfClass("Atmosphere")
+if a then
+savedAtm = { Color = a.Color, Decay = a.Decay, Density = a.Density, Haze = a.Haze, Glare = a.Glare, Offset = a.Offset }
+end
+end
+function restoreLighting(t)
+if not saved then return end
+tw(Lighting, t or 2, saved)
+local a = Lighting:FindFirstChildOfClass("Atmosphere")
+if a then
+if createdAtm then
+tw(a, t or 2, { Density = 0, Haze = 0 })
+Debris:AddItem(a, (t or 2) + 0.2)
+createdAtm = false
+elseif savedAtm then
+tw(a, t or 2, savedAtm)
+end
+end
+saved, savedAtm = nil, nil
+end
+function shakeCF(t, amp)
+if amp <= 0.001 then return CFrame.identity end
+return CFrame.new(math.noise(t * 9, 1, 0) * amp, math.noise(t * 9, 2, 0) * amp, 0)
+* CFrame.Angles(math.noise(t * 7, 3, 0) * amp * 0.03, math.noise(t * 7, 4, 0) * amp * 0.03, math.noise(t * 5, 5, 0) * amp * 0.05)
+end
+hiddenGuis, controls, anchoredRoot = {}, nil, nil
+burst = 0
+rayParams = RaycastParams.new()
+rayParams.FilterType = Enum.RaycastFilterType.Exclude
+function buildGui()
+gui = Instance.new("ScreenGui")
+gui.Name = "ChristmasGui"
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+gui.DisplayOrder = 1000
+gui.Parent = plr:WaitForChild("PlayerGui")
+local function frame(name, z)
+local f = Instance.new("Frame")
+f.Name = name
+f.BorderSizePixel = 0
+f.ZIndex = z
+f.Parent = gui
+return f
+end
+barTop = frame("BarTop", 5)
+barTop.BackgroundColor3 = Color3.new(0, 0, 0)
+barTop.AnchorPoint = Vector2.new(0, 1)
+barTop.Size = UDim2.new(1, 0, 0.12, 0)
+barBot = frame("BarBot", 5)
+barBot.BackgroundColor3 = Color3.new(0, 0, 0)
+barBot.Position = UDim2.new(0, 0, 1, 0)
+barBot.Size = UDim2.new(1, 0, 0.12, 0)
+flashF = frame("Flash", 8)
+flashF.BackgroundColor3 = Color3.new(1, 1, 1)
+flashF.BackgroundTransparency = 1
+flashF.Size = UDim2.new(1, 0, 1, 0)
+cover = frame("Cover", 9)
+cover.BackgroundColor3 = Color3.new(0, 0, 0)
+cover.Size = UDim2.new(1, 0, 1, 0)
+local skip = Instance.new("TextButton")
+skip.ZIndex = 20
+skip.AnchorPoint = Vector2.new(1, 1)
+skip.Position = UDim2.new(1, -14, 1, -10)
+skip.Size = UDim2.new(0, 70, 0, 30)
+skip.BackgroundTransparency = 1
+skip.Text = "SKIP >>"
+skip.TextColor3 = C(200, 200, 200)
+skip.TextTransparency = 0.45
+skip.Font = Enum.Font.GothamBold
+skip.TextSize = 13
+skip.Parent = gui
+skip.Activated:Connect(function() abort = true end)
+end
+                       
