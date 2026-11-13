@@ -1,0 +1,14 @@
+-- LOADER: LocalScript na ito, ilagay sa StarterPlayer > StarterPlayerScripts, pangalan: ChristmasClient
+-- Sa LOOB ng LocalScript na ito, gumawa ng 3 ModuleScript na pinangalanang eksaktong: M1, M2, M3
+-- (i-paste sa M1 ang M1, sa M2 ang M2, sa M3 ang M3). Walang ibang ilalagay dito.
+local env = setmetatable({ script = script }, { __index = getfenv() })
+for _, n in ipairs({ "M1", "M2", "M3" }) do
+	local m = script:WaitForChild(n, 10)
+	if not m then
+		warn("[Christmas] Walang ModuleScript na '" .. n .. "' sa loob ng LocalScript na ito.")
+		return
+	end
+	local fn = require(m)
+	setfenv(fn, env)
+	fn()
+end
