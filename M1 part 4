@@ -1,0 +1,8 @@
+function pine(parent, pos, s)
+cyl(parent, pos, 3 * s, 1.4 * s, C(90, 60, 35), Enum.Material.Wood)
+for _, l in ipairs({ { 2.2, 11, 5 }, { 5.2, 8.5, 4.2 }, { 8.2, 6, 3.6 }, { 11, 3.4, 3 } }) do
+cyl(parent, pos + V(0, l[1] * s, 0), l[3] * s, l[2] * s, C(25, 95, 55))
+cyl(parent, pos + V(0, (l[1] + l[3] * 0.85) * s, 0), 0.5 * s, l[2] * 0.8 * s, SNOW, Enum.Material.Snow)
+end
+end
+end
