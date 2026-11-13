@@ -1,0 +1,157 @@
+return function()
+function lamp(parent, pos)
+cyl(parent, pos, 7, 0.4, C(40, 40, 50))
+local b = mk(parent, BALL, V(1.5, 1.5, 1.5), CFrame.new(pos + V(0, 7.4, 0)), C(255, 225, 150), NEON)
+local l = Instance.new("PointLight")
+l.Color = C(255, 210, 140) l.Range = 24 l.Brightness = 1.4
+l.Parent = b
+end
+function makeHouse(parent, cf, col, s, lit, bulbs)
+local h = { win = {}, bulbs = {} }
+local function P(shape, size, pos, color, mat, tr)
+return mk(parent, shape, size * s, cf * CFrame.new(pos * s), color, mat, tr)
+end
+P(BLOCK, V(10, 6, 10), V(0, 3, 0), col)
+P(BLOCK, V(11, 1, 11), V(0, 6.5, 0), C(140, 45, 40))
+P(BLOCK, V(8.6, 1, 11), V(0, 7.45, 0), SNOW, Enum.Material.Snow)
+P(BLOCK, V(6.2, 1, 11), V(0, 8.4, 0), SNOW, Enum.Material.Snow)
+P(BLOCK, V(3.8, 1, 11), V(0, 9.35, 0), SNOW, Enum.Material.Snow)
+P(BLOCK, V(1.7, 3.4, 1.7), V(2.6, 9.9, -1), C(140, 70, 55))
+P(BLOCK, V(2.1, 0.4, 2.1), V(2.6, 11.8, -1), SNOW, Enum.Material.Snow)
+P(BLOCK, V(1.8, 3.2, 0.3), V(0, 1.6, -5.05), C(95, 60, 35), Enum.Material.Wood)
+P(BALL, V(0.25, 0.25, 0.25), V(0.6, 1.6, -5.25), GOLD, NEON)
+local wr = mk(parent, CYL, V(0.3, 1.4, 1.4) * s, cf * CFrame.new(V(0, 3.4, -5.25) * s) * CFrame.Angles(0, PI / 2, 0), GREEN)
+wr.Name = "Wreath"
+P(BALL, V(0.45, 0.45, 0.45), V(0, 2.8, -5.4), RED)
+for _, x in ipairs({ -3, 3 }) do
+P(BLOCK, V(2.7, 2.7, 0.2), V(x, 3.7, -5.0), WHITE)
+local w = P(BLOCK, V(2.2, 2.2, 0.3), V(x, 3.7, -5.1), C(55, 65, 90))
+h.win[#h.win + 1] = w
+end
+local cc = { C(255, 60, 60), C(80, 255, 120), C(255, 220, 60), C(90, 160, 255) }
+for i = 0, 6 do
+local b = P(BALL, V(0.5, 0.5, 0.5), V(-4.5 + i * 1.5, 5.75, -5.3), cc[i % 4 + 1], NEON)
+h.bulbs[#h.bulbs + 1] = b
+if bulbs then bulbs[#bulbs + 1] = b end
+end
+h.chim = cf:PointToWorldSpace(V(2.6, 12.4, -1) * s)
+local sm = P(BLOCK, V(1, 1, 1), V(2.6, 12, -1), WHITE, nil, 1)
+local e = Instance.new("ParticleEmitter")
+e.Texture = "rbxasset://textures/particles/smoke_main.dds"
+e.Color = ColorSequence.new(C(220, 220, 230))
+e.Size = NumberSequence.new(1.2 * s, 3.5 * s)
+e.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 1) })
+e.Lifetime = NumberRange.new(3, 5)
+e.Rate = 4
+e.Speed = NumberRange.new(2, 4)
+e.Acceleration = V(1, 2, 0)
+e.Parent = sm
+if lit then
+for _, w in ipairs(h.win) do w.Color = C(255, 214, 110) w.Material = NEON end
+end
+return h
+end
+function lightHouse(h)
+for _, w in ipairs(h.win) do
+w.Material = NEON
+tw(w, 0.4, { Color = C(255, 214, 110) })
+end
+end
+function buildVillage(parent, O)
+local W = { houses = {}, bulbs = {}, folks = {} }
+local g = mk(parent, BLOCK, V(1400, 2, 1400), CFrame.new(O + V(0, -1, 0)), SNOW, Enum.Material.Snow)
+g.CanQuery = true
+mk(parent, BLOCK, V(300, 0.2, 12), CFrame.new(O + V(0, 0.1, 0)), C(190, 200, 218), Enum.Material.Snow)
+for _, m in ipairs({ { -420, -200, 300 }, { 450, 100, 340 }, { -300, 450, 260 }, { 250, -420, 300 }, { 0, -520, 380 }, { -120, 560, 300 } }) do
+mk(parent, BALL, V(m[3], m[3], m[3]), CFrame.new(O + V(m[1], -m[3] * 0.38, m[2])), C(225, 232, 248), Enum.Material.Snow)
+end
+local cols = { C(180, 70, 60), C(70, 120, 170), C(200, 160, 70), C(90, 150, 100), C(150, 90, 170) }
+local k = 0
+for _, z in ipairs({ -30, 30 }) do
+for _, x in ipairs({ -56, -28, 0, 28, 56 }) do
+k += 1
+local cf = CFrame.new(O + V(x, 0, z)) * CFrame.Angles(0, z < 0 and PI or 0, 0)
+W.houses[#W.houses + 1] = makeHouse(parent, cf, cols[(k - 1) % 5 + 1], 1, math.random() < 0.4, W.bulbs)
+end
+end
+W.santa = makeHouse(parent, CFrame.new(O + V(0, 0, -100)) * CFrame.Angles(0, PI, 0), C(200, 55, 55), 1.9, true, W.bulbs)
+local sg = mk(parent, BLOCK, V(1, 1, 1), CFrame.new(O + V(0, 30, -90)), WHITE, nil, 1)
+local bb = Instance.new("BillboardGui")
+bb.Size = UDim2.new(0, 320, 0, 60)
+bb.StudsOffset = V(0, 2, 0)
+bb.Adornee = sg
+bb.Parent = sg
+local tl = Instance.new("TextLabel")
+tl.Size = UDim2.new(1, 0, 1, 0)
+tl.BackgroundTransparency = 1
+tl.Text = "SANTA'S HOUSE"
+tl.TextScaled = true
+tl.Font = Enum.Font.GothamBlack
+tl.TextColor3 = GOLD
+tl.TextStrokeTransparency = 0
+tl.Parent = bb
+disc(parent, O + V(0, 0.25, -70), 24, C(180, 30, 40))
+disc(parent, O + V(0, 0.2, -70), 27, GOLD, NEON)
+for _, p in ipairs({ { -90, -55 }, { -75, -70 }, { 80, -60 }, { 95, -85 }, { -110, -20 }, { 105, -10 }, { -100, 25 }, { 100, 40 },
+{ -85, 60 }, { -40, 70 }, { 40, 65 }, { 80, 70 }, { -130, -90 }, { 130, -95 }, { -50, -112 }, { 55, -112 } }) do
+pine(parent, O + V(p[1], 0, p[2]), rnd(0.9, 1.5))
+end
+for i, x in ipairs({ -70, -42, -14, 14, 42, 70 }) do lamp(parent, O + V(x, 0, i % 2 == 0 and 7 or -7)) end
+for _, p in ipairs({ { -20, 12 }, { 35, -12 }, { -62, -14 } }) do
+local r = makeSnow(parent, 1)
+setRig(r, CFrame.new(O + V(p[1], 0, p[2])) * CFrame.Angles(0, rnd(0, 6), 0), 0)
+W.folks[#W.folks + 1] = { rig = r, cf = CFrame.new(O + V(p[1], 0, p[2])) * CFrame.Angles(0, rnd(0, 6), 0) }
+end
+for _, p in ipairs({ { 14, 10 }, { -40, -10 }, { 60, 12 } }) do
+local r = makeFolk(parent, "elf", 0.7, false)
+W.folks[#W.folks + 1] = { rig = r, cf = CFrame.new(O + V(p[1], 0, p[2])) * CFrame.Angles(0, PI + rnd(-1, 1), 0), elf = true }
+end
+return W
+end
+function buildRoom(parent, O)
+local Rm = {}
+local function P(shape, size, pos, color, mat, tr) return mk(parent, shape, size, CFrame.new(O + pos), color, mat, tr) end
+local wall = C(176, 60, 52)
+P(BLOCK, V(44, 1, 32), V(0, -0.5, 0), C(120, 78, 46), Enum.Material.Wood)
+P(BLOCK, V(44, 18, 1), V(0, 9, -16.5), wall)
+P(BLOCK, V(44, 18, 1), V(0, 9, 16.5), wall)
+P(BLOCK, V(1, 18, 32), V(-22.5, 9, 0), wall)
+P(BLOCK, V(1, 18, 32), V(22.5, 9, 0), wall)
+P(BLOCK, V(44, 1, 32), V(0, 18.5, 0), C(90, 60, 40), Enum.Material.Wood)
+P(BLOCK, V(44, 4, 0.3), V(0, 2, -15.9), WHITE)
+P(BLOCK, V(7, 6, 0.4), V(8, 9, -15.9), WHITE)
+P(BLOCK, V(6, 5, 0.3), V(8, 9, -15.7), C(15, 25, 70), NEON)
+P(BALL, V(1.2, 1.2, 1.2), V(10, 10.4, -15.5), C(235, 240, 255), NEON)
+for i = 1, 8 do P(BALL, V(0.25, 0.25, 0.25), V(rnd(5.3, 10.7), rnd(7, 11.2), -15.5), WHITE, NEON) end
+disc(parent, O + V(0, 0.03, -1), 19.5, WHITE)
+disc(parent, O + V(0, 0.05, -1), 18, C(170, 30, 40))
+P(BLOCK, V(3, 8, 9), V(-20.5, 4, 2), C(120, 115, 115), Enum.Material.Slate)
+P(BLOCK, V(0.4, 3.6, 5.2), V(-18.9, 2.2, 2), C(10, 10, 10))
+P(BLOCK, V(3.6, 0.5, 10), V(-20.3, 8.2, 2), C(100, 65, 38), Enum.Material.Wood)
+P(BLOCK, V(0.5, 0.7, 9.6), V(-18.9, 8.7, 2), GREEN)
+for i = 0, 3 do
+P(BLOCK, V(0.3, 1.6, 0.8), V(-18.8, 7.2, -0.5 + i * 1.7), i % 2 == 0 and RED or C(40, 150, 70))
+P(BLOCK, V(0.35, 0.4, 0.9), V(-18.8, 8, -0.5 + i * 1.7), WHITE)
+end
+Rm.flames = {}
+for i = 0, 2 do
+Rm.flames[#Rm.flames + 1] = P(BLOCK, V(0.5, 1.6, 0.5), V(-19.6, 1.1, 0.6 + i * 1.4), C(255, 140, 30), NEON)
+end
+local fl = Instance.new("PointLight")
+fl.Color = C(255, 150, 60) fl.Range = 45 fl.Brightness = 2.5
+fl.Parent = Rm.flames[2]
+Rm.fireLight = fl
+local tp = O + V(16, 0, -9)
+cyl(parent, tp, 2, 1.2, C(90, 60, 35), Enum.Material.Wood)
+for _, l in ipairs({ { 2, 8, 3 }, { 4.6, 6.5, 3 }, { 7, 5, 3 }, { 9.4, 3.4, 3 } }) do cyl(parent, tp + V(0, l[1], 0), l[3], l[2], C(25, 110, 55)) end
+local star = mk(parent, BALL, V(1.4, 1.4, 1.4), CFrame.new(tp + V(0, 13.4, 0)), GOLD, NEON)
+local sl = Instance.new("PointLight")
+sl.Color = GOLD sl.Range = 30 sl.Brightness = 1.5
+sl.Parent = star
+local oc = { C(255, 60, 60), C(80, 160, 255), C(255, 220, 60), C(255, 120, 220) }
+for i = 1, 22 do
+local a, y = rnd(0, 6.28), rnd(2.5, 11)
+local rad = math.max(0.4, (13 - y) * 0.36)
+P(BALL, V(0.6, 0.6, 0.6), V(16 + math.cos(a) * rad, y, -9 + math.sin(a) * rad), oc[i % 4 + 1], NEON)
+end
+  
