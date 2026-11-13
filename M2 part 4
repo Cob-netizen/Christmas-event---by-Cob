@@ -1,0 +1,152 @@
+bells(function() return cutId == my and not abort and phase ~= "end" end, 0.18, 1.6)
+runShot(6.5, function(a)
+local e = easeInOut(a)
+return CFrame.lookAt((O + V(-70, 40, 45)):Lerp(O + V(-24, 13, -48), e), O + V(0, 17, -100)), lerp(72, 58, a)
+end, 0.03)
+if abort then return end
+flash(WHITE, 0.35, 0.3)
+place("in")
+phase, tPhase = "read", os.clock()
+letterOn = true
+paper.Visible = true
+task.spawn(function()
+for _, tx in ipairs(LETTERS) do
+for i = 1, #tx do
+if not letterOn or abort or cutId ~= my then return end
+pl.Text = string.sub(tx, 1, i)
+sleep(0.04)
+end
+sleep(1.1)
+end
+end)
+runShot(4.5, function(a)
+local e = easeInOut(a)
+return CFrame.lookAt((O2 + V(-12, 8, 13)):Lerp(O2 + V(-4, 6, 6), e), O2 + V(0, 4.5, -3)), lerp(64, 52, a)
+end, 0.03)
+if abort then return end
+runShot(4, function(a)
+return CFrame.lookAt((O2 + V(3, 5.6, -9.6)):Lerp(O2 + V(1.4, 5.4, -8.4), a), O2 + V(0, 5.6, -2.6)), lerp(45, 38, a)
+end, 0.03)
+if abort then return end
+runShot(3.5, function(a)
+return CFrame.lookAt((O2 + V(-3.5, 6.4, -3.4)):Lerp(O2 + V(-1.5, 5.6, -4.6), a), O2 + V(1.2, 3.9, -7.5)), lerp(55, 45, a)
+end, 0.03)
+if abort then return end
+letterOn = false
+paper.Visible = false
+phase, tPhase, alarm = "startle", os.clock(), true
+Rm.screenText.Text = "!! ALERT !!\nGIFTS NEEDED"
+Rm.screenText.TextColor3 = C(255, 60, 60)
+task.spawn(function()
+local k = 0
+while alarm and cutId == my and not abort do
+sfx(SND.ping, 0.9, k % 2 == 0 and 0.9 or 1.4)
+k += 1
+task.wait(0.3)
+end
+end)
+flash(C(255, 40, 40), 0.85, 0.7)
+burst = 1.6
+tw(cc, 0.2, { TintColor = C(255, 170, 170) })
+sfx(SND.boom, 1, 0.6)
+task.spawn(function() showText("ALERT!", 110, C(255, 60, 60), 0.45, 1.5, C(80, 0, 0)) end)
+runShot(2.0, function(a)
+return CFrame.lookAt((O2 + V(12, 7.5, 10)):Lerp(O2 + V(9, 7, 8), a), O2 + V(-2, 8, -9)), 75
+end, 0.12)
+if abort then return end
+flash(WHITE, 0.4, 0.3)
+task.spawn(function() showText("THE GIFTS MUST BE DELIVERED!", 46, WHITE, 0.78, 2.0, RED) end)
+runShot(2.8, function(a)
+return CFrame.lookAt((O2 + V(1.5, 5.8, -6.6)):Lerp(O2 + V(0.6, 5.8, -5.4), a), O2 + V(0, 6.4, -2.6)), lerp(50, 32, easeInOut(a))
+end, 0.1)
+if abort then return end
+alarm = false
+phase = "pad"
+flash(WHITE, 0.5, 0.4)
+tw(cc, 0.3, { TintColor = C(225, 240, 255) })
+place("out")
+sfx(SND.lunge, 0.8, 0.6)
+runShot(1.9, function(a)
+return CFrame.lookAt((O + V(6, 3.5, -34)):Lerp(O + V(3, 3.2, -38), a), O + V(0, 4.8, -42.5)), lerp(55, 45, a)
+end, 0.03)
+if abort then return end
+runShot(2, function(a)
+return CFrame.lookAt((O + V(26, 5, -60)):Lerp(O + V(20, 6, -52), a), O + V(0, 4, -58)), lerp(62, 55, a)
+end, 0.03)
+if abort then return end
+task.spawn(function() showText("HO HO HO!", 90, WHITE, 0.45, 1.6, RED) end)
+hoho(nil, 0.9)
+runShot(2.2, function(a)
+unit.santa.armR = 2.6 + math.sin(a * 20) * 0.4
+return CFrame.lookAt((O + V(6, 8.4, -65)):Lerp(O + V(3.5, 8.2, -67), a), O + V(0, 7.9, -73)), lerp(46, 38, a)
+end, 0.03)
+if abort then return end
+local pts = {}
+for _, p in ipairs({ { 0, 0.3, -70 }, { 0, 10, -62 }, { -35, 20, -62 }, { -85, 25, -58 }, { -115, 26, -48 }, { -118, 26, -34 }, { -100, 26, -29 },
+{ -70, 26, -31 }, { -40, 26, -31 }, { 0, 26, -31 }, { 40, 26, -31 }, { 85, 26, -32 }, { 110, 27, -28 }, { 128, 28, -8 }, { 128, 29, 12 },
+{ 110, 28, 29 }, { 85, 26, 31 }, { 40, 26, 31 }, { 0, 26, 31 }, { -40, 26, 31 }, { -85, 26, 31 }, { -115, 34, 20 }, { -125, 46, 0 } }) do
+pts[#pts + 1] = O + V(p[1], p[2], p[3])
+end
+local P = buildPath(pts)
+local throws = {}
+for _, h in ipairs(W.houses) do
+local best, bi = 1e9, 1
+for i, p in ipairs(P.p) do
+local dx, dz = p.X - h.chim.X, p.Z - h.chim.Z
+local dd = dx * dx + dz * dz
+if dd < best then best, bi = dd, i end
+end
+throws[#throws + 1] = { s = P.c[bi] - 14, h = h, p = h.chim }
+end
+local function sAt(tn) if tn < 3.2 then return 5.3 * tn * tn end return 54.3 + 34 * (tn - 3.2) end
+local Tn = 3.2 + (P.L - 54.3) / 34
+local b1 = 3.6
+local rest = Tn - b1
+local lastShot, fixedPos = -1, nil
+phase = "fly"
+puff(cutFolder, O + V(0, 1, -70), WHITE, 90, 2.5)
+sfx(SND.whoosh, 1, 0.5)
+sfx(SND.lunge, 1, 0.7)
+burst = 1.2
+bells(function() return cutId == my and not abort and phase == "fly" end, 0.3, 0.5)
+task.spawn(function()
+while phase == "fly" and cutId == my and not abort do
+task.wait(2.4)
+if phase == "fly" then sfx(SND.whoosh, 0.35, 0.8) end
+end
+end)
+task.delay(5, function() if phase == "fly" and cutId == my then hoho(nil, 0.7) end end)
+runShot(Tn, function(a)
+local tn = a * Tn
+local s = math.min(sAt(tn), P.L)
+local pos, dir = pathAt(P, s), pathDir(P, s)
+local bank = math.clamp(dir:Cross(pathDir(P, s + 8)).Y * 6, -0.5, 0.5)
+local cf = CFrame.lookAt(pos, pos + dir) * CFrame.Angles(0, 0, bank)
+placeUnit(unit, cf, os.clock(), false)
+for _, th in ipairs(throws) do
+if not th.done and s >= th.s then
+th.done = true
+unit.throwT = os.clock()
+sfx(SND.whoosh, 0.5, 1.4)
+local gm = makeGift(cutFolder, 1.4)
+launch(gm, cf * V(2, 4.8, 2.5), th.p, 1.0, 5, false, function()
+gm:Destroy()
+puff(cutFolder, th.p, GOLD, 30, 1.2)
+ringFx(cutFolder, th.p, GOLD, 12)
+lightHouse(th.h)
+sfx(SND.ping, 0.8, 1.5 + math.random() * 0.5)
+end)
+end
+end
+local idx, st, ln = 0, 0, b1
+if tn >= b1 then
+ln = rest / 5
+idx = math.min(5, 1 + math.floor((tn - b1) / ln))
+st = b1 + (idx - 1) * ln
+end
+if idx ~= lastShot then
+lastShot = idx
+fixedPos = nil
+if idx > 0 then flash(WHITE, 0.25, 0.25) end
+end
+        
